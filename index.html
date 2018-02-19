@@ -1,0 +1,305 @@
+<html>
+<head>
+	<title>Shooting Game - Recognize.tech</title>
+	<style>
+		*{
+			background-color: #000;
+		}
+		canvas#bg{
+			background-image: url('gameimage/forest.jpeg');
+			background-repeat: no-repeat;
+			background-size: cover;
+			display: block;
+			margin: auto;
+			box-shadow: 0 0 30px #a33;
+			border-radius: 20px;
+			animation: slide 5s linear infinite;
+		}
+		canvas#jump{
+			background-image: url('gameimage/jump.jpg');
+			background-repeat: no-repeat;
+			background-size: contain;
+			background-position: center;
+			display: block;
+			margin: auto;
+			animation: jump 2s ease-in infinite;
+		}
+		@keyframes slide {
+		    0% {  
+		    	filter: grayscale(0%) contrast(300%) brightness(200%);
+		    }
+		    5%{
+		    	filter: grayscale(50%) contrast(1) brightness(1);
+		    }
+		    10%{
+		    	filter: grayscale(0%) contrast(300%) brightness(150%);
+		    }
+		    18%{
+		    	filter: grayscale(0%) contrast(1) brightness(1);
+		    }
+		    50% { 
+		    	filter: grayscale(50%);
+		    }
+		    100% { 
+		    	filter: grayscale(50%);
+		    } 
+		}
+
+		@keyframes jump {
+		    0% {  
+		    	filter: grayscale(0%) contrast(300%) brightness(200%);
+		    }
+		    10%{
+		    	filter: grayscale(50%) contrast(1) brightness(1);
+		    	transform: scale(3);
+		    }
+		    50%{
+		    	filter: grayscale(0%) contrast(300%) brightness(150%);
+		    }
+		    100%{
+		    	filter: grayscale(0%) contrast(1) brightness(1);
+		    }
+		}
+		div#container{
+			color: #f00;
+			width: 100%;
+			padding-top: 20px;
+			text-align: center;
+			font-size: 15px;
+			font-family: "Arial";
+		}
+		span#title{
+			text-transform: capitalize;
+		}
+	</style>
+</head>
+
+<body onload="startGame()">
+	<script>
+		size = 20;
+		startingRadiusX = 380;
+		endingRadiusX = 1000;
+		startingRadiusY = 400;
+		endingRadiusY = 600;
+		actionDetected = false;
+		score = 0;
+
+		var bgm = new Audio("gameimage/creepy.mp3");
+		var shotsound = new Audio('gameimage/shot.mp3');
+		var scream = new Audio('gameimage/scream.mp3');
+		var jump = new Audio('gameimage/jump.mp3');
+		bgm.loop = true;
+		jump.loop = true;
+
+		gunImg = new Image();
+		gunImg.src = "gameimage/gun.png";
+		bulletImg = new Image();
+		bulletImg.src = "gameimage/bullet.png";
+		bloodImg = new Image();
+		bloodImg.src = "gameimage/blood.png";
+		
+		function startGame(){
+			bgm.play();
+			gamearea.start();
+
+		}
+
+		function updateScore(){
+			gamearea.context.fillStyle = "White";
+			gamearea.context.font = "20px arial";
+			gamearea.context.fillText("Score: "+score, 1000,500);
+		}
+
+		function jumpscare(){
+			document.getElementById("bg").remove();
+			document.getElementById("container").remove();
+			jump_obj = document.createElement("canvas");
+			jump_obj.id = "jump";
+			jump_obj.width = 1200;
+			jump_obj.height = 700;
+			bgm.pause();
+			jump.play();
+			document.body.insertBefore(jump_obj, document.body.childNodes[0]);
+		}
+
+		function moveShooter(event){
+			if(!actionDetected){
+				actionDetected = true;
+				movingInterval = setInterval(function(){shooter.move(event);}, 20);
+			}
+		}
+
+		function stopShooter(){
+			actionDetected = false;
+			clearInterval(movingInterval);
+		}
+		var gamearea = {
+			canvas: document.createElement("canvas"),
+			start: function(){
+				this.canvas.id = "bg";
+				this.canvas.width = 1200;
+				this.canvas.height = 600;
+
+				this.context = this.canvas.getContext("2d");
+
+				ghostImg = new Image();
+				ghostImg.src = "gameimage/ghost.png";
+				ghostImg.height = 150;
+				ghostImg.width = 130;
+
+				document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+
+				ghost = new target();
+				window.addEventListener("keydown", moveShooter, event);
+				window.addEventListener("keyup", stopShooter);
+				this.interval = setInterval(this.updateGameArea, 40);
+			},
+			updateGameArea: function(){
+				gamearea.clear();
+				updateScore();
+				if(score == 300){
+					jumpscare();
+				}
+				ang = Math.PI * 0.01 * cnt;
+				((ang==Math.PI)? ghost = new target(): cnt=cnt + 0.5);
+				shooter.draw();
+				ghost.update();
+				ghost.draw();
+			},
+			clear: function(){
+				gamearea.context.clearRect(0,0, gamearea.canvas.width, gamearea.canvas.height);
+			}
+		}
+
+		var shooter = {
+			x: 500,
+			y: 400,
+			gunsizeY: 200,
+			gunsizeX: 200,
+			draw: function(){
+				gamearea.context.drawImage(gunImg, this.x, this.y, this.gunsizeX, this.gunsizeY);
+				viewer.draw();
+			},
+			shoot: function(){
+				shotsound.play();
+				bullet_obj = new bullet(this.x+80);
+				bullet_obj.draw();
+				shootingInterval = setInterval(function(){bullet_obj.update();}, 30);
+			},
+			clear: function(){
+				gamearea.context.clearRect(this.x, this.y, this.gunsizeX, this.gunsizeY);
+				gamearea.context.clearRect(viewer.x-viewer.viewersizeX, viewer.y+viewer.viewersizeY, viewer.viewersizeX*2, viewer.viewersizeY*2);
+				
+			},
+			move: function(event){
+				if((event.keyCode == 37 && shooter.x > 0) || (event.keyCode == 38 && viewer.y > 0) || (event.keyCode == 39 && shooter.x < gamearea.canvas.width - shooter.gunsizeY) || (event.keyCode == 40 && viewer.y < gamearea.canvas.height - viewer.viewersizeY) || event.keyCode == 65){
+					shooter.clear();
+					switch(event.keyCode){
+						case 37:
+							this.x -= 10;
+							viewer.x -= 10;
+							break;
+						case 38:
+							viewer.y -= 10;
+							break;
+						case 39:
+							this.x += 10;
+							viewer.x += 10;
+							break;
+						case 40:
+							viewer.y += 10;
+							break;
+						case 65:
+							shooter.shoot();
+							stopShooter();
+							setTimeout(function(){bullet_obj = null;}, 1000);
+							break;
+					}
+					shooter.draw();
+				} else {
+					stopShooter();
+				}
+			}
+		}
+
+		var viewer = {
+			x: 580,
+			y: 300,
+			viewersizeX: 40,
+			viewersizeY: 40,
+			draw: function(){
+				gamearea.context.beginPath();
+				gamearea.context.lineWidth = "2";
+				gamearea.context.strokeStyle = "#800";
+				gamearea.context.arc(this.x, this.y, this.viewersizeX - 10, 0 ,2*Math.PI);
+				gamearea.context.stroke();
+				gamearea.context.closePath();
+
+				gamearea.context.beginPath();
+				gamearea.context.moveTo(this.x, this.y-this.viewersizeY);
+				gamearea.context.lineTo(this.x, this.y+this.viewersizeY);
+				gamearea.context.stroke();
+				gamearea.context.closePath();
+
+				gamearea.context.beginPath();
+				gamearea.context.moveTo(this.x-this.viewersizeX, this.y);
+				gamearea.context.lineTo(this.x+this.viewersizeX, this.y);
+				gamearea.context.stroke();
+				gamearea.context.closePath();
+			}
+		}
+
+		function target(){
+			this.y = 580;
+			this.radiusY = startingRadiusY + Math.floor(Math.random()*(endingRadiusY - startingRadiusY + 1));
+			this.radiusX = startingRadiusX + Math.floor(Math.random()*(endingRadiusX - startingRadiusX + 1));
+			this.centerX = 590;
+			this.centerY = 600;
+			this.targetScore = 100;
+
+			this.x = this.radiusX + this.centerX;
+			cnt = 0
+
+			this.draw = function(){
+				gamearea.context.drawImage(ghostImg , this.x, this.y, ghostImg.width, ghostImg.height);
+			}
+			this.update = function(){
+				this.x = this.centerX - (this.radiusX * Math.sin(ang));
+				this.y = this.centerY + (this.radiusY * Math.cos(ang));
+			}
+		}
+
+		function bullet(x){
+			this.tmpViewerY = viewer.y;
+			this.y = 500;
+			this.x = x;
+			this.size = 20;
+			this.yDestination = viewer.y;
+			this.draw = function(){
+				gamearea.context.drawImage(bulletImg, this.x, this.y, this.size, this.size);
+			};
+			this.update = function(){
+				this.clear();
+				if(this.y <= this.tmpViewerY){
+					if(this.x > ghost.x && this.y > ghost.y && this.x < ghost.x + ghostImg.width && this.y < ghost.y + ghostImg.height){
+						scream.play();
+						gamearea.context.drawImage(bloodImg, this.x, this.y, ghostImg.width, ghostImg.height);
+						score += ghost.targetScore;
+						ghost = new target();
+					}
+					clearInterval(shootingInterval);
+					return;
+				}
+				this.y -= 10;
+				this.size -= 0.2;
+				this.draw();
+			};
+			this.clear = function(){
+				gamearea.context.clearRect(this.x, this.y, this.size, this.size);
+			};
+		}
+	</script>
+	<div id="container"><span id="title">ghost shooting game to get the mysterious ending</span> (Key "a" for Shooting, arrow keys for Aiming)</div>
+</body>
+
+</html>
